@@ -1,16 +1,21 @@
 #include <mfapi.h>
 #include "conversion.h"
 
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 ConversionFunction gFormatConversions[] =
 {
 	{ MFVideoFormat_RGB32, TransformImage_RGB32 },
 	{ MFVideoFormat_RGB24, TransformImage_RGB24 },
 	{ MFVideoFormat_YUY2, TransformImage_YUY2 },
-	{ MFVideoFormat_NV12, TransformImage_NV12 }
+	{ MFVideoFormat_NV12, TransformImage_NV12 },
+	{ MFVideoFormat_MJPG, TransformImage_MJPG }
 };
 
-const DWORD gConversionFormats = 4;
+const DWORD gConversionFormats = 5;
 
 
 
@@ -20,7 +25,8 @@ void TransformImage_RGB24(
 	const BYTE* aSrc,
 	LONG        aSrcStride,
 	DWORD       aWidthInPixels,
-	DWORD       aHeightInPixels
+	DWORD       aHeightInPixels,
+	DWORD		aBufferLength
 	)
 {
 	for (DWORD y = 0; y < aHeightInPixels; y++)
@@ -50,7 +56,8 @@ void TransformImage_RGB32(
 	const BYTE* aSrc,
 	LONG        aSrcStride,
 	DWORD       aWidthInPixels,
-	DWORD       aHeightInPixels
+	DWORD       aHeightInPixels,
+	DWORD		aBufferLength
 	)
 {
 	MFCopyImage(aDest, aDestStride, aSrc, aSrcStride, aWidthInPixels * 4, aHeightInPixels);
@@ -88,7 +95,8 @@ void TransformImage_YUY2(
 	const BYTE* aSrc,
 	LONG        aSrcStride,
 	DWORD       aWidthInPixels,
-	DWORD       aHeightInPixels
+	DWORD       aHeightInPixels,
+	DWORD		aBufferLength
 	)
 {
 	for (DWORD y = 0; y < aHeightInPixels; y++)
@@ -123,7 +131,8 @@ void TransformImage_NV12(
 	const BYTE* aSrc,
 	LONG aSrcStride,
 	DWORD aWidthInPixels,
-	DWORD aHeightInPixels
+	DWORD aHeightInPixels,
+	DWORD aBufferLength
 	)
 {
 	const BYTE* bitsY = aSrc;
@@ -187,4 +196,48 @@ void TransformImage_NV12(
 		bitsCr += aSrcStride;
 		bitsCb += aSrcStride;
 	}
+}
+
+void TransformImage_MJPG(
+	BYTE* aDst,
+	LONG aDstStride,
+	const BYTE* aSrc,
+	LONG aSrcStride,
+	DWORD aWidthInPixels,
+	DWORD aHeightInPixels,
+	DWORD aBufferLength
+	)
+{
+
+	int w,h;
+	w=h=0;
+	int cc=0;
+
+	stbi_uc *uc=stbi_load_from_memory(aSrc,aBufferLength,&w,&h,&cc,3);
+
+	if(h>aHeightInPixels)
+	{
+		h=aHeightInPixels;
+	}
+	if(w>aWidthInPixels)
+	{
+		w=aWidthInPixels;
+	}
+
+	for (DWORD y = 0; y < aHeightInPixels; y++)
+	{
+		DWORD *destPel = (DWORD*)aDst;
+
+		for (DWORD x = 0; x < aWidthInPixels; x++)
+		{
+			if(x<w && y<h)
+			{
+				destPel[x]=(uc[(y*aWidthInPixels*cc)+(x*cc)] << 16)+(uc[(y*aWidthInPixels*cc)+(x*cc)+1] << 8)+(uc[(y*aWidthInPixels*cc)+(x*cc)+2]);
+			}
+		}
+
+		aDst += aDstStride;
+	}
+
+	stbi_image_free(uc);
 }

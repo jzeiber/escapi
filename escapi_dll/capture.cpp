@@ -119,6 +119,9 @@ STDMETHODIMP CaptureClass::OnReadSample(
 				ScopedRelease<IMFMediaBuffer> mediabuffer_s(mediabuffer);
 
 				DO_OR_DIE_CRITSECTION;
+				
+				DWORD aBufferLength=0;
+				mediabuffer->GetCurrentLength(&aBufferLength);
 
 				// Draw the frame.
 
@@ -138,7 +141,8 @@ STDMETHODIMP CaptureClass::OnReadSample(
 						scanline0,
 						stride,
 						mCaptureBufferWidth,
-						mCaptureBufferHeight
+						mCaptureBufferHeight,
+						aBufferLength
 						);
 				}
 				else
