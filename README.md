@@ -4,10 +4,6 @@ Extremely Simple Capture API
 Copyright (c)2015 Jari Komppa
 http://iki.fi/sol
 
-## Binaries
-
-Binaries available at http://iki.fi/sol/zip/escapi3.zip
-
 ## Usage
 
 Add escapi.cpp to your project. This file contains code 
